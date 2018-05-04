@@ -56,9 +56,9 @@ mail = Mail(app)
 OURTRAVELLER = 'Teddy'
 PHOTO_DIR = '../ft/static/uploads/{}/'.format(OURTRAVELLER) # where photos from places visited are saved
 SERVICE_IMG_DIR = '../ft/static/uploads/{}/service/'.format(OURTRAVELLER) # where 'general info' images are saved (summary map, secret code example etc)
-SHORT_TIMEOUT = 0  # 2 # seconds, between messages for imitation of 'live' typing
-MEDIUM_TIMEOUT = 0  # 4
-LONG_TIMEOUT = 0  # 6
+SHORT_TIMEOUT = 1  # 2 # seconds, between messages for imitation of 'live' typing
+MEDIUM_TIMEOUT = 2  # 4
+LONG_TIMEOUT = 3  # 6
 SUPPORT_EMAIL = 'iurii.dziuban@gmail.com'
 
 CONTEXTS = []   # holds last state
