@@ -955,30 +955,10 @@ def journey_begins(chat_id, traveller):
         Retrieves journey summary for a given traveller from DB and presents it (depending on quantity of places
         visited, the only one can be also shown or user may be asked if he want's to see the places)
     '''
-    client = MongoClient()
-    db = client.TeddyGo
-
-    # Message: I've checked in ... places in ... country[ies] (country1 [, country2 etc]) and have been traveling for ... days so far
-    traveller_summary = db.travellers.find_one({'name': traveller})
-    #print('traveller_summary: {}'.format(traveller_summary))
-    total_locations = traveller_summary['total_locations']
-    total_countries = traveller_summary['total_countries']
-    countries_visited = traveller_summary['countries_visited']
-    countries = ', '.join(countries_visited)
-    journey_duration = ft_functions.time_passed(traveller)
-    total_distance = round(traveller_summary['total_distance'] / 1000, 1)
-    distance_from_home = round(traveller_summary['distance_from_home'] / 1000, 1)
-    if total_countries == 1:
-        countries_form = 'country'
-    else:
-        countries_form = 'countries'
-    if journey_duration == 1:
-        day_or_days = 'day'
-    else:
-        day_or_days = 'days'
-
-    speech = 'So far I\'ve checked in <strong>{}</strong> places located in <strong>{}</strong> {} ({}) and have been traveling for <strong>{}</strong> {}.\n\nI covered about <b>{}</b> km it total and currently I\'m nearly <b>{}</b> km from home'.format(
-        total_locations, total_countries, countries_form, countries, journey_duration, day_or_days, total_distance, distance_from_home)
+    speech = ft_functions.get_journey_summary(traveller)
+    if not speech:
+        speech = ''
+        total_locations = 0
     bot.send_message(chat_id, speech, parse_mode='html')
     return total_locations
 
