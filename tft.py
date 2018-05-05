@@ -955,10 +955,15 @@ def journey_begins(chat_id, traveller):
         Retrieves journey summary for a given traveller from DB and presents it (depending on quantity of places
         visited, the only one can be also shown or user may be asked if he want's to see the places)
     '''
-    speech = ft_functions.get_journey_summary(traveller)
-    if not speech:
-        speech = ''
-        total_locations = 0
+    speech = ''
+    total_locations = 0
+
+    journey_summary = ft_functions.get_journey_summary(traveller)
+
+    if journey_summary:
+        speech = journey_summary['speech']
+        total_locations = journey_summary['total_locations']
+
     bot.send_message(chat_id, speech, parse_mode='html')
     return total_locations
 
