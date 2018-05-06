@@ -20,7 +20,7 @@ import ft_functions
 from keys import FLASK_SECRET_KEY, TG_TOKEN, DF_TOKEN, GOOGLE_MAPS_API_KEY, MAIL_PWD
 
 print(' ')
-print('########### chatbot.py - new session ############')
+print('########### tft.py - new session ############')
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -789,7 +789,7 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
         input_type = 'other content types'
     else:
         input_type = 'entered manually'
-    print('User\'s input: {} ({})'.format(users_input, input_type))
+    #print('User\'s input: {} ({})'.format(users_input, input_type))
     print('Intent: {}, speech: {}'.format(intent, speech))
     print('Contexts: {}'.format(CONTEXTS))
 
