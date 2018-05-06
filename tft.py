@@ -686,10 +686,11 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                     CONTEXTS.append('ready_for_submit')
 
                     # Resume up user's input (location, photos, comment) and ask to confirm or reset
-                    time.sleep(SHORT_TIMEOUT)
+                    time.sleep(LONG_TIMEOUT)
                     bot.send_message(chat_id,
                                      'In total your input will look like this:', parse_mode='html')
                     if new_location_summary(chat_id, from_user):
+                        time.sleep(SHORT_TIMEOUT)
                         bot.send_message(chat_id,
                                          'Is that Ok? If yes, please click \"<b>Submit</b>\".\nOtherwise click \"<b>Reset</b>\" to start afresh',
                                          parse_mode='html', reply_markup=chatbot_markup.submit_reset_menu)
@@ -1151,7 +1152,7 @@ def submit_new_location(traveller):
         # Logging
         print('')
         print('Saving location to DB...')
-        print('NEWLOCATION: {}'.format(NEWLOCATION))
+        #print('NEWLOCATION: {}'.format(NEWLOCATION))
 
         client = MongoClient()
         db = client.TeddyGo
@@ -1162,6 +1163,7 @@ def submit_new_location(traveller):
         # Update journey summary
         ft_functions.summarize_journey(OURTRAVELLER)
 
+        print('Done')
         return True
     except Exception as e:
         print('submit_new_location() exception: {}'.format(e))
