@@ -1,4 +1,5 @@
 from telebot import types
+from flask_babel import Babel, gettext, lazy_gettext
 
 OURTRAVELLER = 'Teddy'
 

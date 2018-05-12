@@ -11,6 +11,7 @@ import requests, json
 from pymongo import MongoClient
 import telebot
 from datetime import datetime, timezone
+from flask_babel import Babel, gettext, lazy_gettext
 import time
 import random
 
@@ -18,13 +19,15 @@ import chatbot_markup
 
 import ft_functions
 from keys import FLASK_SECRET_KEY, TG_TOKEN, DF_TOKEN, GOOGLE_MAPS_API_KEY, MAIL_PWD
+from translations import L10N
 
 print(' ')
-print('########### tft.py - new session ############')
+print('########### Fellowtraveler Telegram Chatbot - New session ############')
 
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.secret_key = FLASK_SECRET_KEY
+babel = Babel(app)
 bot = telebot.TeleBot(TG_TOKEN)
 
 mail = Mail(app)
@@ -60,6 +63,7 @@ SHORT_TIMEOUT = 1  # 2 # seconds, between messages for imitation of 'live' typin
 MEDIUM_TIMEOUT = 2  # 4
 LONG_TIMEOUT = 3  # 6
 SUPPORT_EMAIL = 'iurii.dziuban@gmail.com'
+USER_LANGUAGE = 'en'
 
 CONTEXTS = []   # holds last state
 NEWLOCATION = {    # stores data for traveler's location before storing it to DB
@@ -77,6 +81,13 @@ NEWLOCATION = {    # stores data for traveler's location before storing it to DB
     'photos': []
 }
 
+LANGUAGES = {
+    'en': 'English',
+    'ru': 'Русский',
+    'de': 'Deutsch',
+    'fr': 'Français',
+    'uk': 'Українська'
+}
 ####################################### TG Bot INI END #########################################
 
 ###################################### '/' Handlers START ######################################
@@ -85,8 +96,18 @@ NEWLOCATION = {    # stores data for traveler's location before storing it to DB
 # Block 0
 def start_handler(message):
     global CONTEXTS
+    global USER_LANGUAGE
     # A fix intended not to respond to every image uploaded (if several)
     respond_to_several_photos_only_once()
+
+    # Get user language from message
+    if message.from_user.language_code != None:
+        lang = message.from_user.language_code.split('-')[0]
+        if lang not in LANGUAGES.keys():
+            USER_LANGUAGE = 'en'
+        else:
+            USER_LANGUAGE = lang
+    print('USER_LANGUAGE: {}'.format(USER_LANGUAGE))
 
     if 'if_journey_info_needed' not in CONTEXTS:
         CONTEXTS.clear()
@@ -138,7 +159,8 @@ def you_got_fellowtraveler(message):
     respond_to_several_photos_only_once()
 
     if 'code_correct' not in CONTEXTS:
-        bot.send_message(message.chat.id, 'Congratulations! That\'s a tiny adventure and some responsibility ;)\nTo proceed please <b>enter the secret code</b> from the toy', parse_mode='html')
+        # message1 = 'Congratulations! That\'s a tiny adventure and some responsibility ;)\nTo proceed please <b>enter the secret code</b> from the toy'
+        bot.send_message(message.chat.id, text=L10N['message1'][USER_LANGUAGE], parse_mode='html')
         secret_code_img = open(SERVICE_IMG_DIR + 'how_secret_code_looks_like.jpg', 'rb')
         bot.send_photo(message.chat.id, secret_code_img, reply_markup=chatbot_markup.cancel_help_contacts_menu)
     # Console logging
@@ -277,7 +299,7 @@ def other_content_types_handler(message):
     respond_to_several_photos_only_once()
 
     # Get input data
-    users_input = 'User entered something different from text, button_click, photo or location'
+    users_input = ';)' #User entered something different from text, button_click, photo or location
     chat_id = message.chat.id
     from_user = message.from_user
 
@@ -332,10 +354,10 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
         speech = random.choice(short_reaction_variants)
         intent = 'media_received'
     elif other_input:
-        intent = 'other_content_types'
         short_reaction_variants = [';)', 'Ok', 'Okay', 'Hm..']
         reaction = random.choice(short_reaction_variants)
         speech = '{}\nWhat would you like to do next?'.format(reaction)
+        intent = 'other_content_types'
     else:
         dialoflows_response = dialogflow(users_input, chat_id)
         speech = dialoflows_response['speech']
@@ -412,8 +434,12 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
         if intent == 'next_info':
             total_locations = journey_begins(chat_id, OURTRAVELLER)
             time.sleep(SHORT_TIMEOUT)
+            if total_locations == 0:
+                bot.send_message(chat_id,
+                                 'My journey hasn\'nt started yet. Will you add my first location?',
+                                 reply_markup=chatbot_markup.intro_menu)
             # If there's only 1 location, show it and present basic menu ("Teddy's story/Help/You got Teddy?")
-            if total_locations == 1:
+            elif total_locations == 1:
                 the_1st_place(chat_id, OURTRAVELLER, False)
                 bot.send_message(chat_id,
                                  'And that\'s all my journey so far ;)\n\nWhat would you like to do next? We can just talk or use this menu:',
@@ -665,40 +691,13 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                         # All other text inputs/button clicks
                         default_fallback(chat_id, intent, speech)
 
-            # Block 2-5. User was prompted to leave a comment and entered some text
+            # Block 2-5. User was prompted to leave a comment
+            # He/she might enter text (Ok), click buttons under the prev. block (Next/Reset/Instructions) or enter
+            # other input types (for eg., a sticker, photo, location etc) (not Ok)
             elif 'any_comments' in CONTEXTS \
-                    and 'last_media_input' not in CONTEXTS:
-                if not is_btn_click:
-                    # Update contexts - leave only 'code_correct' and 'any_comments'
-                    CONTEXTS.clear()
-                    CONTEXTS.append('code_correct')
-                    CONTEXTS.append('any_comments')
-
-                    # Show user what he/she has entered as a comment
-                    bot.send_message(chat_id,
-                                     'Ok. So we\'ll treat the following as your comment:\n<i>{}</i>'.format(users_input),
-                                     parse_mode='html')
-                    # Save user's comment to NEWLOCATION
-                    NEWLOCATION['comment'] = users_input
-
-                    # Update contexts - remove 'any_comments', add 'ready_for_submit'
-                    CONTEXTS.remove('any_comments')
-                    CONTEXTS.append('ready_for_submit')
-
-                    # Resume up user's input (location, photos, comment) and ask to confirm or reset
-                    time.sleep(LONG_TIMEOUT)
-                    bot.send_message(chat_id,
-                                     'In total your input will look like this:', parse_mode='html')
-                    if new_location_summary(chat_id, from_user):
-                        time.sleep(SHORT_TIMEOUT)
-                        bot.send_message(chat_id,
-                                         'Is that Ok? If yes, please click \"<b>Submit</b>\".\nOtherwise click \"<b>Reset</b>\" to start afresh',
-                                         parse_mode='html', reply_markup=chatbot_markup.submit_reset_menu)
-                    else:
-                        bot.send_message(chat_id,
-                                         'Hmm.. Some error occured. Could you please try again?',
-                                         parse_mode='html', reply_markup=chatbot_markup.you_got_teddy_menu)
-                else:
+                    and 'last_media_input' not in CONTEXTS: # that is last input was not a photo, photo/-s input in prev. block finished
+                # Button clicks
+                if is_btn_click:
                     # User doesn't want to give a comment
                     if intent == 'next_info':
                         NEWLOCATION['comment'] = ''
@@ -727,6 +726,38 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
                         if not always_triggered(chat_id, intent, speech):
                             # All other text inputs/button clicks
                             default_fallback(chat_id, intent, speech)
+                # Impropriate input (stickers, photo, location etc)
+                elif geodata or media or other_input:
+                    bot.send_message(chat_id,
+                                     'Sorry but only text is accepted as a comment. Could you please enter a text message?', parse_mode='html', reply_markup=chatbot_markup.next_reset_instructions_menu)
+                # Text input
+                else:
+                    # Update contexts - leave only 'code_correct' and 'any_comments'
+                    CONTEXTS.clear()
+                    CONTEXTS.append('code_correct')
+                    CONTEXTS.append('ready_for_submit')
+
+                    # Show user what he/she has entered as a comment
+                    bot.send_message(chat_id,
+                                     'Ok. So we\'ll treat the following as your comment:\n<i>{}</i>'.format(users_input),
+                                     parse_mode='html')
+
+                    # Save user's comment to NEWLOCATION
+                    NEWLOCATION['comment'] = users_input
+
+                    # Resume up user's input (location, photos, comment) and ask to confirm or reset
+                    time.sleep(LONG_TIMEOUT)
+                    bot.send_message(chat_id,
+                                     'In total your input will look like this:', parse_mode='html')
+                    if new_location_summary(chat_id, from_user):
+                        time.sleep(SHORT_TIMEOUT)
+                        bot.send_message(chat_id,
+                                         'Is that Ok? If yes, please click \"<b>Submit</b>\".\nOtherwise click \"<b>Reset</b>\" to start afresh',
+                                         parse_mode='html', reply_markup=chatbot_markup.submit_reset_menu)
+                    else:
+                        bot.send_message(chat_id,
+                                         'Hmm.. Some error occured. Could you please try again?',
+                                         parse_mode='html', reply_markup=chatbot_markup.you_got_teddy_menu)
 
             # Block 2-6. Submitting new location - user clicked 'Submit'
             elif 'ready_for_submit' in CONTEXTS:
@@ -981,46 +1012,49 @@ def the_1st_place(chat_id, traveller, if_to_continue):
     db = client.TeddyGo
 
     # Message: I started my journey in ... on ...
-    the_1st_location = db[traveller].find()[0]
-    formatted_address = the_1st_location['formatted_address']
-    lat = the_1st_location['latitude']
-    long = the_1st_location['longitude']
-    start_date = '{}'.format(the_1st_location['_id'].generation_time.date())
-    time_passed = ft_functions.time_passed(traveller)
-    if time_passed == 0:
-        day_or_days = 'today'
-    elif time_passed == 1:
-        day_or_days = '1 day ago'
-    else:
-        day_or_days = '{} days ago'.format(time_passed)
-    message1 = '<strong>Place #1</strong>\nI started my journey on {} ({}) from \n<i>{}</i>'.format(start_date, day_or_days, formatted_address)
-    bot.send_message(chat_id, message1, parse_mode='html')
-    print('starting location lat/long: {}, {}'.format(lat, long))
-    bot.send_location(chat_id, latitude=lat, longitude=long)
-    photos = the_1st_location['photos']
-    if len(photos) > 0:
-        for photo in photos:
-            print(photo)
-            every_photo = open(PHOTO_DIR + photo, 'rb')
-            bot.send_photo(chat_id, every_photo)
-    author = the_1st_location['author']
-    comment = the_1st_location['comment']
-    message2 = 'That was the 1st place'
-    if comment != '':
-        if author == 'Anonymous':
-            author = '(who decided to remain anonymous)'
+    if db[traveller].find().count() != 0:
+        the_1st_location = db[traveller].find()[0]
+        formatted_address = the_1st_location['formatted_address']
+        lat = the_1st_location['latitude']
+        long = the_1st_location['longitude']
+        start_date = '{}'.format(the_1st_location['_id'].generation_time.date())
+        time_passed = ft_functions.time_passed(traveller)
+        if time_passed == 0:
+            day_or_days = 'today'
+        elif time_passed == 1:
+            day_or_days = '1 day ago'
         else:
-            author = '<b>{}</b>'.format(author)
-        message2 = 'My new friend {} wrote:\n<i>{}</i>'.format(author, comment)
+            day_or_days = '{} days ago'.format(time_passed)
+        message1 = '<strong>Place #1</strong>\nI started my journey on {} ({}) from \n<i>{}</i>'.format(start_date, day_or_days, formatted_address)
+        bot.send_message(chat_id, message1, parse_mode='html')
+        print('starting location lat/long: {}, {}'.format(lat, long))
+        bot.send_location(chat_id, latitude=lat, longitude=long)
+        photos = the_1st_location['photos']
+        if len(photos) > 0:
+            for photo in photos:
+                print(photo)
+                every_photo = open(PHOTO_DIR + photo, 'rb')
+                bot.send_photo(chat_id, every_photo)
+        author = the_1st_location['author']
+        comment = the_1st_location['comment']
+        message2 = 'That was the 1st place'
+        if comment != '':
+            if author == 'Anonymous':
+                author = '(who decided to remain anonymous)'
+            else:
+                author = '<b>{}</b>'.format(author)
+            message2 = 'My new friend {} wrote:\n<i>{}</i>'.format(author, comment)
+        else:
+            if author != 'Anonymous':
+                message2 = 'I got acquainted with a new friend - <b>{}</b> :)'.format(author)
+        if if_to_continue:
+            bot.send_message(chat_id, message2, parse_mode='html', reply_markup=chatbot_markup.next_or_help_menu)
+            #print('Here')
+        else:
+            bot.send_message(chat_id, message2, parse_mode='html')
+            #print('There')
     else:
-        if author != 'Anonymous':
-            message2 = 'I got acquainted with a new friend - <b>{}</b> :)'.format(author)
-    if if_to_continue:
-        bot.send_message(chat_id, message2, parse_mode='html', reply_markup=chatbot_markup.next_or_help_menu)
-        #print('Here')
-    else:
-        bot.send_message(chat_id, message2, parse_mode='html')
-        #print('There')
+        pass
 
 
 def every_place(chat_id, traveller, location_to_show, if_to_continue):
@@ -1184,7 +1218,7 @@ def new_location_summary(chat_id, from_user):
     '''
     try:
         location_date = datetime.now().strftime('%Y-%m-%d')
-        message1 = 'On {} I was in \n<i>{}</i>'.format(location_date, NEWLOCATION['formatted_address'])
+        message1 = 'On {} I ({}) was in \n<i>{}</i>'.format(location_date, OURTRAVELLER, NEWLOCATION['formatted_address'])
         bot.send_message(chat_id, message1, parse_mode='html')
         bot.send_location(chat_id, NEWLOCATION['latitude'], NEWLOCATION['longitude'])
         photos = NEWLOCATION['photos']
@@ -1222,7 +1256,7 @@ def save_static_map(traveller):
     Requests a list of places visited by traveller from DB and draws a static (png) map
     '''
     try:
-        markers = ft_functions.get_location_history(traveller)['mymarkers'][::-1]
+        markers = ft_functions.get_location_history(traveller, PHOTO_DIR)['mymarkers'][::-1]
         latlongparams = ''
         for index, marker in enumerate(markers):
             latlongparams += '&markers=color:green%7Clabel:{}%7C{},{}'.format(index + 1, marker['lat'], marker['lng'])
