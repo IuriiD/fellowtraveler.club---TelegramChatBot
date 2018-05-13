@@ -49,7 +49,8 @@ mail = Mail(app)
     start - Let's get acquainted
     help - Get help
     tell_your_story - Display this traveler's story
-    you_got_fellowtraveler - Do you have it? Get info what to do next    
+    you_got_fellowtraveler - Do you have it? Get info what to do next
+    change_language - Change language  
 '''
 ####################################### TG Bot INI START #######################################
 
@@ -60,7 +61,7 @@ SHORT_TIMEOUT = 1  # 2 # seconds, between messages for imitation of 'live' typin
 MEDIUM_TIMEOUT = 2  # 4
 LONG_TIMEOUT = 3  # 6
 SUPPORT_EMAIL = 'iurii.dziuban@gmail.com'
-USER_LANGUAGE = 'en'
+USER_LANGUAGE = None
 
 CONTEXTS = []   # holds last state
 NEWLOCATION = {    # stores data for traveler's location before storing it to DB
@@ -98,13 +99,8 @@ def start_handler(message):
     respond_to_several_photos_only_once()
 
     # Get user language from message
-    if message.from_user.language_code != None:
-        lang = message.from_user.language_code.split('-')[0]
-        if lang not in LANGUAGES.keys():
-            USER_LANGUAGE = 'en'
-        else:
-            USER_LANGUAGE = lang
-    print('USER_LANGUAGE: {}'.format(USER_LANGUAGE))
+    if not USER_LANGUAGE:
+        USER_LANGUAGE = get_language(message)
 
     if 'if_journey_info_needed' not in CONTEXTS:
         CONTEXTS.clear()
@@ -123,6 +119,7 @@ def start_handler(message):
     print('User entered "/start"')
     print('Contexts: {}'.format(CONTEXTS))
 
+
 @bot.message_handler(commands=['tell_your_story'])
 def tell_your_story(message):
     global CONTEXTS
@@ -136,6 +133,7 @@ def tell_your_story(message):
     print()
     print('User entered "/tell_your_story"')
     print('Contexts: {}'.format(CONTEXTS))
+
 
 @bot.message_handler(commands=['help'])
 def help(message):
@@ -167,6 +165,16 @@ def you_got_fellowtraveler(message):
     print('User entered "/you_got_fellowtraveler"')
     print('Contexts: {}'.format(CONTEXTS))
 
+
+@bot.message_handler(commands=['change_language'])
+def change_language(message):
+    global USER_LANGUAGE
+
+    USER_LANGUAGE = get_language(message)
+
+    # message81 = 'Please select your language'
+    bot.send_message(message.chat.id,
+                     L10N['message81'][USER_LANGUAGE], parse_mode='html', reply_markup=change_language_menu_kb(USER_LANGUAGE))
 
 ###################################### '/' Handlers END ######################################
 
@@ -329,6 +337,7 @@ def dialogflow(query, chat_id, lang_code='en'):
     }
     return output
 
+
 def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=None, media=False, other_input=False):
     '''
         Main handler. Function gets input from user (typed text OR callback_data from button clicks), 'feeds' it
@@ -368,6 +377,9 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
         dialoflows_response = dialogflow(users_input, chat_id)
         speech = dialoflows_response['speech']
         intent = dialoflows_response['intent']
+        print('###########')
+        print('intent: {}'.format(intent))
+        print('speech: {}'.format(speech))
 
     # Block 0. User clicked/typed "Contact support" and the next text input should be sent to support email
     if 'contact_support' in CONTEXTS:
@@ -870,12 +882,14 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
     print('Intent: {}, speech: {}'.format(intent, speech))
     print('Contexts: {}'.format(CONTEXTS))
 
+
 def always_triggered(chat_id, intent, speech):
     '''
         Buttons | You got Teddy? | Teddy's story | Help | are activated always, irrespective of context
         Buttons | Instructions | Add location | are activated always in context 'code_correct'
     '''
     global CONTEXTS
+    global USER_LANGUAGE
 
     # User typed 'Help' or similar
     if intent == 'show_faq':
@@ -926,7 +940,36 @@ def always_triggered(chat_id, intent, speech):
                          parse_mode='html', reply_markup=cancel_help_contacts_menu_kb(USER_LANGUAGE))
         return True
 
-    #if 'contact_support' in CONTEXTS:
+    # Switch language buttons
+    elif intent == 'change_language':
+        # message81 = 'Please select your language'
+        bot.send_message(chat_id,
+                         L10N['message81'][USER_LANGUAGE], parse_mode='html',
+                         reply_markup=change_language_menu_kb(USER_LANGUAGE))
+
+    # Switch to English
+    elif intent == 'language_to_english':
+        USER_LANGUAGE = 'en'
+        # message82 = 'Language was changed to <b>English</b>'
+        bot.send_message(chat_id, L10N['message82'][USER_LANGUAGE],
+                         parse_mode='html', reply_markup=intro_menu_kb(USER_LANGUAGE))
+        return True
+
+    # Switch to Russian
+    elif intent == 'language_to_russian':
+        USER_LANGUAGE = 'ru'
+        # message82 = 'Language was changed to <b>English</b>'
+        bot.send_message(chat_id, L10N['message82'][USER_LANGUAGE],
+                         parse_mode='html', reply_markup=intro_menu_kb(USER_LANGUAGE))
+        return True
+
+    # Switch to Ukrainian
+    elif intent == 'language_to_ukrainian':
+        USER_LANGUAGE = 'uk'
+        # message82 = 'Language was changed to <b>English</b>'
+        bot.send_message(chat_id, L10N['message82'][USER_LANGUAGE],
+                         parse_mode='html', reply_markup=intro_menu_kb(USER_LANGUAGE))
+        return True
 
     # Buttons | Instructions | Add location | are activated always in context 'code_correct'
     if 'code_correct' in CONTEXTS:
@@ -991,6 +1034,7 @@ def default_fallback(chat_id, intent, speech):
         # message8 = 'What would you like to do next?'
         bot.send_message(chat_id, L10N['message8'][USER_LANGUAGE], reply_markup=intro_menu_kb(USER_LANGUAGE))
 
+
 def travelers_story_intro(chat_id):
     '''
         Traveler presents him/herself, his/her goal and asks if user would like to know more about traveler's journey
@@ -1001,11 +1045,12 @@ def travelers_story_intro(chat_id):
     # message58 = 'I\'m a traveler.\nMy dream is to see the world'
     bot.send_photo(chat_id, traveler_photo,
                    caption='{} <strong>{}</strong>. {}'.format(L10N['message57'][USER_LANGUAGE],
-                       OURTRAVELLER, L10N['message58'][USER_LANGUAGE]), parse_mode='html')
+                       OURTRAVELLER, L10N['message58'][USER_LANGUAGE]), parse_mode='html', reply_markup=change_language_button_menu_kb(USER_LANGUAGE))
     time.sleep(SHORT_TIMEOUT)
     # message59 = 'Do you want to know more about my journey?'
     bot.send_message(chat_id, L10N['message59'][USER_LANGUAGE],
                      reply_markup=yes_no_gotteddy_menu_kb(USER_LANGUAGE))
+
 
 def journey_intro(chat_id, traveller):
     '''
@@ -1048,6 +1093,7 @@ def journey_intro(chat_id, traveller):
                          parse_mode='html', disable_web_page_preview=True, reply_markup=next_or_help_menu_kb(USER_LANGUAGE))
         biography_photo = open(SERVICE_IMG_DIR + 'biography.jpg', 'rb')
         bot.send_photo(chat_id, biography_photo)
+
 
 def journey_begins(chat_id, traveller):
     '''
@@ -1384,6 +1430,18 @@ def respond_to_several_photos_only_once():
         if 'media_input' in CONTEXTS:
             CONTEXTS.remove('media_input')
 
+
+def get_language(message):
+    '''
+        Retrieves from message and returns user's language code
+    '''
+    if message.from_user.language_code != None:
+        lang = message.from_user.language_code.split('-')[0]
+        if lang not in LANGUAGES.keys():
+            language = 'en'
+        else:
+            language = lang
+    return language
 ####################################### Functions END ####################################
 
 ####################################### Markup START #####################################
@@ -1410,6 +1468,7 @@ def yes_no_gotteddy_menu_kb(USER_LANGUAGE):
     yes_no_gotteddy_menu_gotteddy = types.InlineKeyboardButton("{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER), callback_data="You got fellowtraveler")
     yes_no_gotteddy_menu.row(yes_no_gotteddy_menu_yes, yes_no_gotteddy_menu_no, yes_no_gotteddy_menu_gotteddy)
     return yes_no_gotteddy_menu
+
 
 def yes_no_help_menu_kb(USER_LANGUAGE):
     yes_no_help_menu = types.InlineKeyboardMarkup()
@@ -1495,6 +1554,23 @@ def submit_reset_menu_kb(USER_LANGUAGE):
     submit_reset_menu_reset = types.InlineKeyboardButton(L10N['message55'][USER_LANGUAGE], callback_data="Reset")
     submit_reset_menu.row(submit_reset_menu_submit, submit_reset_menu_reset)
     return submit_reset_menu
+
+def change_language_menu_kb(USER_LANGUAGE):
+    change_language_menu = types.InlineKeyboardMarkup()
+    change_language_menu_en = types.InlineKeyboardButton('English', callback_data="Change language to English")
+    change_language_menu_ru = types.InlineKeyboardButton('Русский', callback_data="Change language to Russian")
+    change_language_menu_uk = types.InlineKeyboardButton('Українська', callback_data="Change language to Ukrainian")
+    change_language_menu.row(change_language_menu_en, change_language_menu_ru, change_language_menu_uk)
+    return change_language_menu
+
+
+def change_language_button_menu_kb(USER_LANGUAGE):
+    change_language_button_menu = types.InlineKeyboardMarkup()
+    # message83 = "Change language"
+    change_language_button_menu_change_it = types.InlineKeyboardButton(L10N['message83'][USER_LANGUAGE], callback_data="Change language")
+    change_language_button_menu.row(change_language_button_menu_change_it)
+    return change_language_button_menu
+
 ######################################### Markup END #####################################
 
 while True:
