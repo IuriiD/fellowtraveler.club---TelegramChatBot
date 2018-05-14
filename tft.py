@@ -170,11 +170,15 @@ def you_got_fellowtraveler(message):
 def change_language(message):
     global USER_LANGUAGE
 
-    USER_LANGUAGE = get_language(message)
+    if not USER_LANGUAGE:
+        USER_LANGUAGE = get_language(message)
 
     # message81 = 'Please select your language'
     bot.send_message(message.chat.id,
                      L10N['message81'][USER_LANGUAGE], parse_mode='html', reply_markup=change_language_menu_kb(USER_LANGUAGE))
+    print()
+    print('User entered "/change_language"')
+    print('Contexts: {}'.format(CONTEXTS))
 
 ###################################### '/' Handlers END ######################################
 
@@ -374,6 +378,7 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
         speech = '{}\n{}'.format(reaction, L10N['message8'][USER_LANGUAGE])
         intent = 'other_content_types'
     else:
+        # Text input and callback_data from button clicks is 'fed' to Dialogflow for NLP
         dialoflows_response = dialogflow(users_input, chat_id)
         speech = dialoflows_response['speech']
         intent = dialoflows_response['intent']
@@ -946,6 +951,7 @@ def always_triggered(chat_id, intent, speech):
         bot.send_message(chat_id,
                          L10N['message81'][USER_LANGUAGE], parse_mode='html',
                          reply_markup=change_language_menu_kb(USER_LANGUAGE))
+        return True
 
     # Switch to English
     elif intent == 'language_to_english':
