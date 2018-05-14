@@ -243,6 +243,7 @@ def location_handler(message):
     # And pass it to the main handler function [main_hadler()]
     main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata={'lat': lat, 'lng': lng}, media=False, other_input=False)
 
+
 @bot.message_handler(content_types=['photo'])
 def photo_handler(message):
     '''
@@ -302,6 +303,7 @@ def photo_handler(message):
             print('CONTEXTS: {}'.format(CONTEXTS))
             main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=None, media=True, other_input=False)
 
+
 @bot.message_handler(content_types=['audio', 'document', 'sticker', 'video', 'video_note', 'voice', 'contact', 'new_chat_members', 'left_chat_member', 'new_chat_title', 'new_chat_photo', 'delete_chat_photo', 'group_chat_created', 'supergroup_chat_created', 'channel_chat_created', 'migrate_to_chat_id', 'migrate_from_chat_id', 'pinned_message'])
 def other_content_types_handler(message):
     global CONTEXTS
@@ -329,7 +331,10 @@ def dialogflow(query, chat_id, lang_code='en'):
     '''
     URL = 'https://api.dialogflow.com/v1/query?v=20170712'
     HEADERS = {'Authorization': 'Bearer ' + DF_TOKEN, 'content-type': 'application/json'}
-    payload = {'query': query, 'sessionId': chat_id, 'lang': lang_code}
+    print()
+    print('Sending request to Dialogflow...')
+    print('USER_LANGUAGE: {}'.format(USER_LANGUAGE))
+    payload = {'query': query, 'sessionId': chat_id, 'lang': USER_LANGUAGE}
     r = requests.post(URL, data=json.dumps(payload), headers=HEADERS).json()
     intent = r.get('result').get('metadata').get('intentName')
     speech = r.get('result').get('fulfillment').get('speech')
@@ -1454,12 +1459,13 @@ def get_language(message):
 def intro_menu_kb(USER_LANGUAGE):
     intro_menu = types.InlineKeyboardMarkup()
     # message44 = "My story"
-    print("L10N['message44'][USER_LANGUAGE]: {}".format(L10N['message44'][USER_LANGUAGE]))
-    intro_menu_mystory = types.InlineKeyboardButton(L10N['message44'][USER_LANGUAGE], callback_data="Tell your story")
+    # message84 = "Tell your story"
+    intro_menu_mystory = types.InlineKeyboardButton(L10N['message44'][USER_LANGUAGE], callback_data=L10N['message84'][USER_LANGUAGE])
     # message45 = "FAQ"
-    intro_menu_help = types.InlineKeyboardButton(L10N['message45'][USER_LANGUAGE], callback_data="FAQ")
+    intro_menu_help = types.InlineKeyboardButton(L10N['message45'][USER_LANGUAGE], callback_data=L10N['message45'][USER_LANGUAGE])
     # message46 = "You got"
-    intro_menu_gotteddy = types.InlineKeyboardButton("{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER), callback_data="You got fellowtraveler")
+    # message85 = "You got fellowtraveler"
+    intro_menu_gotteddy = types.InlineKeyboardButton("{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER), callback_data=L10N['message85'][USER_LANGUAGE])
     intro_menu.row(intro_menu_mystory, intro_menu_help, intro_menu_gotteddy)
     return intro_menu
 
@@ -1467,11 +1473,11 @@ def intro_menu_kb(USER_LANGUAGE):
 def yes_no_gotteddy_menu_kb(USER_LANGUAGE):
     yes_no_gotteddy_menu = types.InlineKeyboardMarkup()
     # message47 = "Yes"
-    yes_no_gotteddy_menu_yes = types.InlineKeyboardButton(L10N['message47'][USER_LANGUAGE], callback_data="Yes")
+    yes_no_gotteddy_menu_yes = types.InlineKeyboardButton(L10N['message47'][USER_LANGUAGE], callback_data=L10N['message47'][USER_LANGUAGE])
     # message48 = "No, thanks"
-    yes_no_gotteddy_menu_no = types.InlineKeyboardButton(L10N['message48'][USER_LANGUAGE], callback_data="No")
+    yes_no_gotteddy_menu_no = types.InlineKeyboardButton(L10N['message48'][USER_LANGUAGE], callback_data=L10N['message48'][USER_LANGUAGE])
     # message46 = "You got"
-    yes_no_gotteddy_menu_gotteddy = types.InlineKeyboardButton("{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER), callback_data="You got fellowtraveler")
+    yes_no_gotteddy_menu_gotteddy = types.InlineKeyboardButton("{} {}?".format(L10N['message46'][USER_LANGUAGE], OURTRAVELLER), callback_data=L10N['message85'][USER_LANGUAGE])
     yes_no_gotteddy_menu.row(yes_no_gotteddy_menu_yes, yes_no_gotteddy_menu_no, yes_no_gotteddy_menu_gotteddy)
     return yes_no_gotteddy_menu
 
@@ -1479,11 +1485,11 @@ def yes_no_gotteddy_menu_kb(USER_LANGUAGE):
 def yes_no_help_menu_kb(USER_LANGUAGE):
     yes_no_help_menu = types.InlineKeyboardMarkup()
     # message47 = "Yes"
-    yes_no_help_menu_yes = types.InlineKeyboardButton(L10N['message47'][USER_LANGUAGE], callback_data="Yes")
+    yes_no_help_menu_yes = types.InlineKeyboardButton(L10N['message47'][USER_LANGUAGE], callback_data=L10N['message47'][USER_LANGUAGE])
     # message48 = "No, thanks"
-    yes_no_help_menu_no = types.InlineKeyboardButton(L10N['message48'][USER_LANGUAGE], callback_data="No")
+    yes_no_help_menu_no = types.InlineKeyboardButton(L10N['message48'][USER_LANGUAGE], callback_data=L10N['message48'][USER_LANGUAGE])
     # message45 = "FAQ"
-    yes_no_help_menu_help = types.InlineKeyboardButton(L10N['message45'][USER_LANGUAGE], callback_data="FAQ")
+    yes_no_help_menu_help = types.InlineKeyboardButton(L10N['message45'][USER_LANGUAGE], callback_data=L10N['message45'][USER_LANGUAGE])
     yes_no_help_menu.row(yes_no_help_menu_yes, yes_no_help_menu_no, yes_no_help_menu_help)
     return yes_no_help_menu
 
@@ -1491,9 +1497,9 @@ def yes_no_help_menu_kb(USER_LANGUAGE):
 def next_or_help_menu_kb(USER_LANGUAGE):
     next_or_help_menu = types.InlineKeyboardMarkup()
     # message49 = "Next"
-    next_or_help_menu_next = types.InlineKeyboardButton(L10N['message49'][USER_LANGUAGE], callback_data="Next")
+    next_or_help_menu_next = types.InlineKeyboardButton(L10N['message49'][USER_LANGUAGE], callback_data=L10N['message49'][USER_LANGUAGE])
     # message45 = "FAQ"
-    next_or_help_menu_help = types.InlineKeyboardButton(L10N['message45'][USER_LANGUAGE], callback_data="FAQ")
+    next_or_help_menu_help = types.InlineKeyboardButton(L10N['message45'][USER_LANGUAGE], callback_data=L10N['message45'][USER_LANGUAGE])
     next_or_help_menu.row(next_or_help_menu_next, next_or_help_menu_help)
     return next_or_help_menu
 
@@ -1501,11 +1507,11 @@ def next_or_help_menu_kb(USER_LANGUAGE):
 def cancel_help_contacts_menu_kb(USER_LANGUAGE):
     cancel_help_contacts_menu = types.InlineKeyboardMarkup()
     # message50 = "Cancel"
-    cancel_help_contacts_menu_cancel =  types.InlineKeyboardButton(L10N['message50'][USER_LANGUAGE], callback_data="Cancel")
+    cancel_help_contacts_menu_cancel =  types.InlineKeyboardButton(L10N['message50'][USER_LANGUAGE], callback_data=L10N['message50'][USER_LANGUAGE])
     # message45 = "FAQ"
-    cancel_help_contacts_menu_help = types.InlineKeyboardButton(L10N['message45'][USER_LANGUAGE], callback_data="FAQ")
+    cancel_help_contacts_menu_help = types.InlineKeyboardButton(L10N['message45'][USER_LANGUAGE], callback_data=L10N['message45'][USER_LANGUAGE])
     # message51 = "Contact support"
-    cancel_help_contacts_menu_contacts = types.InlineKeyboardButton(L10N['message51'][USER_LANGUAGE], callback_data="Contact support")
+    cancel_help_contacts_menu_contacts = types.InlineKeyboardButton(L10N['message51'][USER_LANGUAGE], callback_data=L10N['message51'][USER_LANGUAGE])
     cancel_help_contacts_menu.row(cancel_help_contacts_menu_cancel, cancel_help_contacts_menu_help, cancel_help_contacts_menu_contacts)
     return cancel_help_contacts_menu
 
@@ -1513,11 +1519,11 @@ def cancel_help_contacts_menu_kb(USER_LANGUAGE):
 def you_got_teddy_menu_kb(USER_LANGUAGE):
     you_got_teddy_menu = types.InlineKeyboardMarkup()
     # message52 = "Instructions"
-    you_got_teddy_menu_instructions = types.InlineKeyboardButton(L10N['message52'][USER_LANGUAGE], callback_data="Get instructions")
+    you_got_teddy_menu_instructions = types.InlineKeyboardButton(L10N['message52'][USER_LANGUAGE], callback_data=L10N['message52'][USER_LANGUAGE])
     # message53 = "Add location"
-    you_got_teddy_menu_add_place = types.InlineKeyboardButton(L10N['message53'][USER_LANGUAGE], callback_data="Add location")
+    you_got_teddy_menu_add_place = types.InlineKeyboardButton(L10N['message53'][USER_LANGUAGE], callback_data=L10N['message53'][USER_LANGUAGE])
     # message51 = "Contact support"
-    you_got_teddy_menu_contacts = types.InlineKeyboardButton(L10N['message51'][USER_LANGUAGE], callback_data="Contact support")
+    you_got_teddy_menu_contacts = types.InlineKeyboardButton(L10N['message51'][USER_LANGUAGE], callback_data=L10N['message51'][USER_LANGUAGE])
     you_got_teddy_menu.row(you_got_teddy_menu_instructions, you_got_teddy_menu_add_place, you_got_teddy_menu_contacts)
     return you_got_teddy_menu
 
@@ -1533,11 +1539,11 @@ def share_location_kb(USER_LANGUAGE):
 def next_reset_instructions_menu_kb(USER_LANGUAGE):
     next_reset_instructions_menu = types.InlineKeyboardMarkup()
     # message49 = "Next"
-    next_reset_instructions_menu_next = types.InlineKeyboardButton(L10N['message49'][USER_LANGUAGE], callback_data="Next")
+    next_reset_instructions_menu_next = types.InlineKeyboardButton(L10N['message49'][USER_LANGUAGE], callback_data=L10N['message49'][USER_LANGUAGE])
     # message55 = "Reset"
-    next_reset_instructions_menu_reset = types.InlineKeyboardButton(L10N['message55'][USER_LANGUAGE], callback_data="Reset")
+    next_reset_instructions_menu_reset = types.InlineKeyboardButton(L10N['message55'][USER_LANGUAGE], callback_data=L10N['message55'][USER_LANGUAGE])
     # message52 = "Instructions"
-    next_reset_instructions_menu_instructions = types.InlineKeyboardButton(L10N['message52'][USER_LANGUAGE], callback_data="Get instructions")
+    next_reset_instructions_menu_instructions = types.InlineKeyboardButton(L10N['message52'][USER_LANGUAGE], callback_data=L10N['message52'][USER_LANGUAGE])
     next_reset_instructions_menu.row(next_reset_instructions_menu_next, next_reset_instructions_menu_reset, next_reset_instructions_menu_instructions)
     return next_reset_instructions_menu
 
@@ -1545,9 +1551,9 @@ def next_reset_instructions_menu_kb(USER_LANGUAGE):
 def cancel_or_instructions_menu_kb(USER_LANGUAGE):
     cancel_or_instructions_menu = types.InlineKeyboardMarkup()
     # message50 = "Cancel"
-    cancel_or_instructions_menu_cancel = types.InlineKeyboardButton(L10N['message50'][USER_LANGUAGE], callback_data="Cancel")
+    cancel_or_instructions_menu_cancel = types.InlineKeyboardButton(L10N['message50'][USER_LANGUAGE], callback_data=L10N['message50'][USER_LANGUAGE])
     # message52 = "Instructions"
-    cancel_or_instructions_menu_instructions = types.InlineKeyboardButton(L10N['message52'][USER_LANGUAGE], callback_data="Get instructions")
+    cancel_or_instructions_menu_instructions = types.InlineKeyboardButton(L10N['message52'][USER_LANGUAGE], callback_data=L10N['message52'][USER_LANGUAGE])
     cancel_or_instructions_menu.row(cancel_or_instructions_menu_cancel, cancel_or_instructions_menu_instructions)
     return cancel_or_instructions_menu
 
@@ -1555,17 +1561,20 @@ def cancel_or_instructions_menu_kb(USER_LANGUAGE):
 def submit_reset_menu_kb(USER_LANGUAGE):
     submit_reset_menu = types.InlineKeyboardMarkup()
     # message56 = "Submit"
-    submit_reset_menu_submit = types.InlineKeyboardButton(L10N['message56'][USER_LANGUAGE], callback_data="Submit")
+    submit_reset_menu_submit = types.InlineKeyboardButton(L10N['message56'][USER_LANGUAGE], callback_data=L10N['message56'][USER_LANGUAGE])
     # message55 = "Reset"
-    submit_reset_menu_reset = types.InlineKeyboardButton(L10N['message55'][USER_LANGUAGE], callback_data="Reset")
+    submit_reset_menu_reset = types.InlineKeyboardButton(L10N['message55'][USER_LANGUAGE], callback_data=L10N['message55'][USER_LANGUAGE])
     submit_reset_menu.row(submit_reset_menu_submit, submit_reset_menu_reset)
     return submit_reset_menu
 
 def change_language_menu_kb(USER_LANGUAGE):
     change_language_menu = types.InlineKeyboardMarkup()
-    change_language_menu_en = types.InlineKeyboardButton('English', callback_data="Change language to English")
-    change_language_menu_ru = types.InlineKeyboardButton('Русский', callback_data="Change language to Russian")
-    change_language_menu_uk = types.InlineKeyboardButton('Українська', callback_data="Change language to Ukrainian")
+    # message86 = 'Change language to English'
+    change_language_menu_en = types.InlineKeyboardButton('English', callback_data=L10N['message86'][USER_LANGUAGE])
+    # message87 = 'Change language to Russian'
+    change_language_menu_ru = types.InlineKeyboardButton('Русский', callback_data=L10N['message87'][USER_LANGUAGE])
+    # message88 = 'Change language to Ukrainian'
+    change_language_menu_uk = types.InlineKeyboardButton('Українська', callback_data=L10N['message88'][USER_LANGUAGE])
     change_language_menu.row(change_language_menu_en, change_language_menu_ru, change_language_menu_uk)
     return change_language_menu
 
@@ -1573,7 +1582,7 @@ def change_language_menu_kb(USER_LANGUAGE):
 def change_language_button_menu_kb(USER_LANGUAGE):
     change_language_button_menu = types.InlineKeyboardMarkup()
     # message83 = "Change language"
-    change_language_button_menu_change_it = types.InlineKeyboardButton(L10N['message83'][USER_LANGUAGE], callback_data="Change language")
+    change_language_button_menu_change_it = types.InlineKeyboardButton(L10N['message83'][USER_LANGUAGE], callback_data=L10N['message83'][USER_LANGUAGE])
     change_language_button_menu.row(change_language_button_menu_change_it)
     return change_language_button_menu
 
