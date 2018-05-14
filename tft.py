@@ -14,7 +14,6 @@ from telebot import types
 from datetime import datetime, timezone
 import time
 import random
-#import chatbot_markup
 import ft_functions
 from keys import FLASK_SECRET_KEY, TG_TOKEN, DF_TOKEN, GOOGLE_MAPS_API_KEY, MAIL_PWD
 from translations import L10N
@@ -331,9 +330,6 @@ def dialogflow(query, chat_id, lang_code='en'):
     '''
     URL = 'https://api.dialogflow.com/v1/query?v=20170712'
     HEADERS = {'Authorization': 'Bearer ' + DF_TOKEN, 'content-type': 'application/json'}
-    print()
-    print('Sending request to Dialogflow...')
-    print('USER_LANGUAGE: {}'.format(USER_LANGUAGE))
     payload = {'query': query, 'sessionId': chat_id, 'lang': USER_LANGUAGE}
     r = requests.post(URL, data=json.dumps(payload), headers=HEADERS).json()
     intent = r.get('result').get('metadata').get('intentName')
@@ -387,9 +383,6 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
         dialoflows_response = dialogflow(users_input, chat_id)
         speech = dialoflows_response['speech']
         intent = dialoflows_response['intent']
-        print('###########')
-        print('intent: {}'.format(intent))
-        print('speech: {}'.format(speech))
 
     # Block 0. User clicked/typed "Contact support" and the next text input should be sent to support email
     if 'contact_support' in CONTEXTS:
@@ -889,8 +882,8 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
     else:
         input_type = 'entered manually'
     #print('User\'s input: {} ({})'.format(users_input, input_type))
-    print('Intent: {}, speech: {}'.format(intent, speech))
-    print('Contexts: {}'.format(CONTEXTS))
+    #print('Intent: {}, speech: {}'.format(intent, speech))
+    #print('Contexts: {}'.format(CONTEXTS))
 
 
 def always_triggered(chat_id, intent, speech):
@@ -1154,12 +1147,12 @@ def the_1st_place(chat_id, traveller, if_to_continue):
         # message67 = 'from'
         message1 = '{} {} ({}) {} \n<i>{}</i>'.format(L10N['message66'][USER_LANGUAGE], start_date, day_or_days, L10N['message67'][USER_LANGUAGE], formatted_address)
         bot.send_message(chat_id, message1, parse_mode='html')
-        print('starting location lat/long: {}, {}'.format(lat, long))
+        #print('starting location lat/long: {}, {}'.format(lat, long))
         bot.send_location(chat_id, latitude=lat, longitude=long)
         photos = the_1st_location['photos']
         if len(photos) > 0:
             for photo in photos:
-                print(photo)
+                #print(photo)
                 every_photo = open(PHOTO_DIR + photo, 'rb')
                 bot.send_photo(chat_id, every_photo)
         author = the_1st_location['author']
@@ -1226,7 +1219,7 @@ def every_place(chat_id, traveller, location_to_show, if_to_continue):
     photos = location['photos']
     if len(photos) > 0:
         for photo in photos:
-            print(photo)
+            #print(photo)
             every_photo = open(PHOTO_DIR + photo, 'rb')
             bot.send_photo(chat_id, every_photo)
     author = location['author']
