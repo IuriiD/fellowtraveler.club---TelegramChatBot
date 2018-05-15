@@ -1108,11 +1108,43 @@ def journey_begins(chat_id, traveller):
     speech = ''
     total_locations = 0
 
-    journey_summary = ft_functions.get_journey_summary(traveller)
+    travelled_so_far = ft_functions.get_journey_summary(traveller)
+    if not travelled_so_far:
+        speech = ''
+    else:
+        total_countries = travelled_so_far['total_countries']
+        total_locations = travelled_so_far['total_locations']
+        total_distance = travelled_so_far['total_distance']
+        journey_duration = travelled_so_far['journey_duration']
+        distance_from_home = travelled_so_far['distance_from_home']
+        countries_visited_codes = travelled_so_far['countries_visited']
+        countries_visited = ft_functions.translate_countries(countries_visited_codes, USER_LANGUAGE)
+        countries_list = (', ').join(countries_visited)
 
-    if journey_summary:
-        speech = journey_summary['speech']
-        total_locations = journey_summary['total_locations']
+        if total_countries == 1:
+            # message95 = 'country'
+            countries_form = L10N['message95'][USER_LANGUAGE]
+        else:
+            # message96 = 'countries'
+            countries_form = L10N['message96'][USER_LANGUAGE]
+
+        if journey_duration == 1:
+            # message97 = 'day'
+            day_or_days = L10N['message97'][USER_LANGUAGE]
+        else:
+            # message98 = 'days'
+            day_or_days = L10N['message98'][USER_LANGUAGE]
+            # message89 = 'So far I\'ve checked in'
+            # message90 = 'places located in'
+            # message91 = 'and have been traveling for'
+            # message92 = 'I covered about'
+            # message93 = 'km it total and currently I\'m nearly'km from home
+            # message94 = 'km from home'
+            speech = '{} <b>{}</b> {} <b>{}</b> {} ({}) {} <b>{}</b> {}.\n\n' \
+                          '{} <b>{}</b> {} <b>{}</b> {}'.format(
+                L10N['message89'][USER_LANGUAGE],
+            total_locations, L10N['message90'][USER_LANGUAGE], total_countries, countries_form, countries_list, L10N['message91'][USER_LANGUAGE], journey_duration, day_or_days,
+                L10N['message92'][USER_LANGUAGE], total_distance, L10N['message93'][USER_LANGUAGE], distance_from_home, L10N['message94'][USER_LANGUAGE])
 
     bot.send_message(chat_id, speech, parse_mode='html')
     return total_locations
@@ -1138,11 +1170,14 @@ def the_1st_place(chat_id, traveller, if_to_continue):
         start_date = '{}'.format(the_1st_location['_id'].generation_time.date())
         time_passed = ft_functions.time_passed(traveller)
         if time_passed == 0:
-            day_or_days = 'today'
+            # message73 = 'today'
+            day_or_days = L10N['message73'][USER_LANGUAGE]
         elif time_passed == 1:
-            day_or_days = '1 day ago'
+            # message74 = '1 day ago'
+            day_or_days = L10N['message74'][USER_LANGUAGE]
         else:
-            day_or_days = '{} days ago'.format(time_passed)
+            # message75 = 'days ago'
+            day_or_days = '{} {}'.format(time_passed, L10N['message75'][USER_LANGUAGE])
         # message66 = '<strong>Place #1</strong>\nI started my journey on'
         # message67 = 'from'
         message1 = '{} {} ({}) {} \n<i>{}</i>'.format(L10N['message66'][USER_LANGUAGE], start_date, day_or_days, L10N['message67'][USER_LANGUAGE], formatted_address)
