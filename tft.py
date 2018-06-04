@@ -51,6 +51,7 @@ mail = Mail(app)
     you_got_fellowtraveler - Do you have it? Get info what to do next
     change_language - Change language  
 '''
+
 ####################################### TG Bot INI START #######################################
 
 OURTRAVELLER = 'Teddy'
@@ -63,7 +64,7 @@ SUPPORT_EMAIL = 'iurii.dziuban@gmail.com'
 USER_LANGUAGE = None
 
 CONTEXTS = []   # holds last state
-NEWLOCATION = {    # stores data for traveler's location before storing it to DB
+NEWLOCATION = {    # holds data for traveler's location before storing it to DB
     'author': None,
     'channel': 'Telegram',
     'user_id_on_channel': None,
@@ -81,8 +82,8 @@ NEWLOCATION = {    # stores data for traveler's location before storing it to DB
 LANGUAGES = {
     'en': 'English',
     'ru': 'Русский',
-    'de': 'Deutsch',
-    'fr': 'Français',
+    #'de': 'Deutsch',
+    #'fr': 'Français',
     'uk': 'Українська'
 }
 ####################################### TG Bot INI END #########################################
@@ -159,6 +160,12 @@ def you_got_fellowtraveler(message):
         bot.send_message(message.chat.id, '{}\n{}'.format(L10N['message1'][USER_LANGUAGE], L10N['message60'][USER_LANGUAGE]), parse_mode='html')
         secret_code_img = open(SERVICE_IMG_DIR + 'how_secret_code_looks_like.jpg', 'rb')
         bot.send_photo(message.chat.id, secret_code_img, reply_markup=cancel_help_contacts_menu_kb(USER_LANGUAGE))
+    else:
+        # message6 = 'Ok'
+        # message8 = 'What would you like to do next?'
+        bot.send_message(message.chat_id,
+                         '{}. {}'.format(L10N['message6'][USER_LANGUAGE], L10N['message8'][USER_LANGUAGE]),
+                         parse_mode='html', reply_markup=you_got_teddy_menu_kb(USER_LANGUAGE))
     # Console logging
     print()
     print('User entered "/you_got_fellowtraveler"')
@@ -188,6 +195,7 @@ def change_language(message):
 # Handling all text input (NLP using Dialogflow and then depending on recognised intent and contexts variable
 def text_handler(message):
     global CONTEXTS
+    global USER_LANGUAGE
     # A fix intended not to respond to every image uploaded (if several)
     respond_to_several_photos_only_once()
 
@@ -195,6 +203,9 @@ def text_handler(message):
     users_input = message.text
     chat_id = message.chat.id
     from_user = message.from_user
+
+    if USER_LANGUAGE == None:
+        USER_LANGUAGE = get_language(message)
 
     # And pass it to the main handler function [main_hadler()]
     main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=None, media=False, other_input=False)
@@ -211,6 +222,7 @@ def button_click_handler(call):
     # other buttons ( Yes | No, thanks | Cancel | Next) - depend on context, if contexts==[] or irrelevant context - they
     # should return a response for a Fallback_Intent
     global CONTEXTS
+    global USER_LANGUAGE
     # A fix intended not to respond to every image uploaded (if several)
     respond_to_several_photos_only_once()
 
@@ -221,6 +233,10 @@ def button_click_handler(call):
     chat_id = call.message.chat.id
     from_user = call.from_user
 
+    # Get user language from message
+    if not USER_LANGUAGE:
+        USER_LANGUAGE = get_language(call)
+
     # And pass it to the main handler function [main_hadler()]
     main_handler(users_input, chat_id, from_user, is_btn_click=True, geodata=None, media=False, other_input=False)
 
@@ -229,6 +245,7 @@ def button_click_handler(call):
 def location_handler(message):
     global CONTEXTS
     global NEWLOCATION
+    global USER_LANGUAGE
     # A fix intended not to respond to every image uploaded (if several)
     respond_to_several_photos_only_once()
 
@@ -238,6 +255,9 @@ def location_handler(message):
     from_user = message.from_user
     lat = message.location.latitude
     lng = message.location.longitude
+
+    if USER_LANGUAGE == None:
+        USER_LANGUAGE = USER_LANGUAGE = get_language(message)
 
     # And pass it to the main handler function [main_hadler()]
     main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata={'lat': lat, 'lng': lng}, media=False, other_input=False)
@@ -257,10 +277,14 @@ def photo_handler(message):
     '''
     global NEWLOCATION
     global CONTEXTS
+    global USER_LANGUAGE
 
     # Get input data
     chat_id = message.chat.id
     from_user = message.from_user
+
+    if USER_LANGUAGE == None:
+        USER_LANGUAGE = get_language(message)
 
     # Get, check, save photos, add paths to NEWLOCATION['photos]
     if 'media_input' in CONTEXTS:
@@ -307,6 +331,7 @@ def photo_handler(message):
 def other_content_types_handler(message):
     global CONTEXTS
     global NEWLOCATION
+    global USER_LANGUAGE
     # A fix intended not to respond to every image uploaded (if several)
     respond_to_several_photos_only_once()
 
@@ -314,6 +339,9 @@ def other_content_types_handler(message):
     users_input = ';)' #User entered something different from text, button_click, photo or location
     chat_id = message.chat.id
     from_user = message.from_user
+
+    if USER_LANGUAGE == None:
+        USER_LANGUAGE = get_language(message)
 
     # And pass it to the main handler function [main_hadler()]
     main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=None, media=False, other_input=True)
@@ -329,9 +357,14 @@ def dialogflow(query, chat_id, lang_code='en'):
         Function to communicate with Dialogflow for NLP
     '''
     URL = 'https://api.dialogflow.com/v1/query?v=20170712'
+    print('USER_LANGUAGE: ' + lang_code)
     HEADERS = {'Authorization': 'Bearer ' + DF_TOKEN, 'content-type': 'application/json'}
-    payload = {'query': query, 'sessionId': chat_id, 'lang': USER_LANGUAGE}
+    payload = {'query': query, 'sessionId': chat_id, 'lang': lang_code}
     r = requests.post(URL, data=json.dumps(payload), headers=HEADERS).json()
+    print('#####')
+    print('Request from DF: ')
+    print(r)
+    print('#####')
     intent = r.get('result').get('metadata').get('intentName')
     speech = r.get('result').get('fulfillment').get('speech')
     status = r.get('status').get('code')
@@ -380,7 +413,7 @@ def main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=No
         intent = 'other_content_types'
     else:
         # Text input and callback_data from button clicks is 'fed' to Dialogflow for NLP
-        dialoflows_response = dialogflow(users_input, chat_id)
+        dialoflows_response = dialogflow(users_input, chat_id, USER_LANGUAGE)
         speech = dialoflows_response['speech']
         intent = dialoflows_response['intent']
 

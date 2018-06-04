@@ -85,7 +85,7 @@ L10N = {
         'uk': 'Хочете побачити усі місця, в яких я побував?'
     },
     'message17': {
-        'en': 'Any problems, questions, suggestions, remarks, proposals etc? Please enter them below or write to my author\'s email <b>iurii.dziuban@gmail.com</b>\n\n You may also consider visiting <a href="https://iuriid.github.io">iuriid.github.io</a>.',
+        'en': 'Any problems, questions, suggestions, remarks, proposals etc? Please enter them below or write to my author\'s email  <b>iurii.dziuban@gmail.com</b>\n\n You may also consider visiting <a href="https://iuriid.github.io">iuriid.github.io</a>.',
         'ru': 'Проблемы, вопросы, предложения, замечания, советы? Пожалуйста, введите их ниже или напишите моему автору на email<b>iurii.dziuban@gmail.com</b>\n\nВозможно, Вам также будет интересно посетить <a href="https://iuriid.github.io">iuriid.github.io</a>.',
         'uk': 'Проблеми, запитання, пропозиції, зауваження, поради? Будь ласка, введіть їх нижче або напишіть моєму автору на email<b>iurii.dziuban@gmail.com</b>\n\nМожливо, Вам також буде цікаво відвідати <a href="https://iuriid.github.io">iuriid.github.io</a>.'
     },
