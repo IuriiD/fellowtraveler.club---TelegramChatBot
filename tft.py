@@ -314,7 +314,7 @@ def photo_handler(message):
                     users_input = 'User uploaded an image'
                     main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=None, media=True, other_input=False)
         except Exception as e:
-            print('photo_handler() exception: {}'.format(e))
+            #print('photo_handler() exception: {}'.format(e))
             #send_email('Logger', 'photo_handler() exception: {}'.format(e))
             users_input = 'File has invalid image extension or invalid image format'
             main_handler(users_input, chat_id, from_user, is_btn_click=False, geodata=None, media=False, other_input=False)
@@ -357,13 +357,13 @@ def dialogflow(query, chat_id, lang_code='en'):
         Function to communicate with Dialogflow for NLP
     '''
     URL = 'https://api.dialogflow.com/v1/query?v=20170712'
-    print('USER_LANGUAGE: ' + lang_code)
+    #print('USER_LANGUAGE: ' + lang_code)
     HEADERS = {'Authorization': 'Bearer ' + DF_TOKEN, 'content-type': 'application/json'}
     payload = {'query': query, 'sessionId': chat_id, 'lang': lang_code}
     r = requests.post(URL, data=json.dumps(payload), headers=HEADERS).json()
     print('#####')
     print('Request from DF: ')
-    print(r)
+    #print(r)
     print('#####')
     intent = r.get('result').get('metadata').get('intentName')
     speech = r.get('result').get('fulfillment').get('speech')
@@ -1100,7 +1100,7 @@ def journey_intro(chat_id, traveller):
     # message61 = 'Ok, here is my story'
     bot.send_message(chat_id, L10N['message61'][USER_LANGUAGE])
     time.sleep(MEDIUM_TIMEOUT)
-    if save_static_map(traveller):
+    if save_static_map(OURTRAVELLER):
         # message62 = 'I came from <a href="'
         # message63 = '">Cherkasy</a> city, Ukraine, from a family with 3 nice small kids'
         bot.send_message(chat_id,
@@ -1189,7 +1189,6 @@ def the_1st_place(chat_id, traveller, if_to_continue):
         Shows the place our traveller came from. Is used either directly after journey summary (if only 1 or 2 places
         were visited so far) or as the first place in cycle showing all places visited
     '''
-    print()
     #print('the_1st_place - if_to_continue: {}'.format(if_to_continue))
     client = MongoClient()
     db = client.TeddyGo
@@ -1380,7 +1379,7 @@ def gmaps_geocoder(lat, lng):
 
         return True
     except Exception as e:
-        print('gmaps_geocoder() exception: {}'.format(e))
+        #print('gmaps_geocoder() exception: {}'.format(e))
         #send_email('Logger', 'gmaps_geocoder() exception: {}'.format(e))
         return False
 
@@ -1653,6 +1652,6 @@ while True:
     try:
         bot.polling(none_stop=True, timeout=1)
     except Exception as e:
-        print('bot.polling() exception: {}'.format(e))
-        send_email('Logger', 'bot.polling() exception: {}'.format(e))
+        #print('bot.polling() exception: {}'.format(e))
+        #send_email('Logger', 'bot.polling() exception: {}'.format(e))
         time.sleep(15)
