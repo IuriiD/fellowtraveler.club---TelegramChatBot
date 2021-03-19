@@ -13,7 +13,7 @@ future==0.16.0
 googlemaps==2.5.1
 idna==2.6
 itsdangerous==0.24
-Jinja2==2.10
+Jinja2==2.11.3
 MarkupSafe==1.0
 numpy==1.14.2
 oauthlib==2.0.7
